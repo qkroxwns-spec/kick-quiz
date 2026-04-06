@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KICK QUIZ - Toss Mini App</title>
+    <style>
+        :root { --toss-blue: #3182f6; --toss-grey: #f2f4f6; --text-main: #191f28; --text-sub: #8b95a1; --accent-red: #ff3b30; --combo-gold: #ffcc00; }
+        body { font-family: 'Pretendard', -apple-system, sans-serif; margin: 0; background-color: var(--toss-grey); color: var(--text-main); -webkit-user-select: none; line-height: 1.6; word-break: keep-all; }
+        .app-container { max-width: 480px; margin: 0 auto; background: #fff; min-height: 100vh; position: relative; padding-bottom: 100px; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
+        
+        /* Header & Points */
+        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #f2f4f6; }
+        .logo-area { display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 800; color: #000; }
+        .logo-area img { width: 32px; height: 32px; border-radius: 8px; }
+        .point-badge { background: #e8f3ff; color: var(--toss-blue); padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; }
+
+        /* UI Elements */
+        .content-area { padding: 15px 20px; }
+        .card { background: #fff; border-radius: 24px; padding: 24px; margin-bottom: 16px; border: 1px solid #f2f4f6; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
+        .card-title { font-size: 18px; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .hidden { display: none !important; }
+
+        /* Combo & Badge */
+        .combo-tag { background: var(--combo-gold); color: #000; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; margin-left: 5px; }
+        .quiz-badge { background: var(--toss-blue); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: bold; }
+
+        /* Quiz UI */
+        .question { font-size: 20px; font-weight: bold; margin: 25px 0; min-height: 60px; }
+        .btn-ans { width: 100%; padding: 18px; border-radius: 18px; border: none; background: var(--toss-grey); margin-bottom: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-ans:active { background: #e2e4e6; transform: scale(0.98); }
+
+        /* Prediction UI */
+        .match-card { background: #fff; border-radius: 20px; padding: 20px; border: 1px solid #f2f4f6; margin-bottom: 12px; position: relative; }
+        .match-teams { display: flex; justify-content: space-around; align-items: center; text-align: center; font-weight: bold; margin: 15px 0; }
+        .predict-grid { display: flex; gap: 8px; margin-top: 15px; }
+        .btn-predict { flex: 1; padding: 12px; border-radius: 12px; border: 1px solid #e5e8eb; background: #fff; font-weight: bold; cursor: pointer; font-size: 13px; }
+        .btn-predict:active:not(:disabled) { background: var(--toss-blue); color: #fff; }
+        .btn-predict:disabled { opacity: 0.5; cursor: not-allowed; }
+        .my-team-tag { position: absolute; top: 10px; left: 10px; background: var(--accent-red); color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+
+        /* Navigation */
+        .nav-bar { position: fixed; bottom: 0; max-width: 480px; width: 100%; display: flex; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-top: 1px solid #eee; padding: 10px 0; z-index: 1000; }
+        .nav-item { flex: 1; text-align: center; color: var(--text-sub); font-size: 11px; cursor: pointer; }
+        .nav-item.active { color: var(--toss-blue); font-weight: bold; }
+        .nav-icon { font-size: 22px; display: block; margin-bottom: 4px; }
+
+        /* Modals */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 20px; box-sizing: border-box; }
+        .modal { background: #fff; width: 100%; max-width: 340px; border-radius: 28px; padding: 30px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        .btn-modal-main { background: var(--toss-blue); color: white; width: 100%; padding: 16px; border-radius: 16px; border: none; font-weight: bold; margin-top: 15px; cursor: pointer; font-size: 16px; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <div class="logo-area"><img src="https://kick-quiz.vercel.app/static/media/kick_logo.4a2292f7.png" alt="logo"> KICK QUIZ</div>
+        <div class="point-badge"><span id="u-points">0</span> P</div>
+    </header>
+
+    <div class="content-area">
+        <div id="tab-home" class="tab-content">
+            <div class="card" id="quiz-card">
+                <div class="card-title">오늘의 퀴즈 <span id="combo-display" class="combo-tag hidden">0 콤보!</span><span class="quiz-badge" id="q-status">불러오는 중</span></div>
+                <div class="question" id="q-text">데이터를 로드하고 있습니다...</div>
+                <div id="q-options"></div>
+            </div>
+            <div class="card" style="background: #f9fafb; border:none; text-align:center;">
+                <p style="font-size:14px; color:var(--text-sub);">🔥 매일 4문제를 모두 맞히면 보너스 100P!</p>
+            </div>
+        </div>
+
+        <div id="tab-match" class="tab-content hidden">
+            <div id="match-list"></div>
+        </div>
+
+        <div id="tab-shop" class="tab-content hidden">
+            <div class="card">
+                <div class="card-title">기프티콘 박스 🎁</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:15px 0; border-bottom:1px solid #f2f4f6;">
+                    <span>🍗 치킨 박스 (토/일)</span>
+                    <button class="btn-modal-main" style="width:auto; margin:0;" onclick="buyBox('치킨')">1,500P</button>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:15px 0;">
+                    <span>🍜 야식 박스 (상시)</span>
+                    <button class="btn-modal-main" style="width:auto; margin:0;" onclick="buyBox('야식')">500P</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-my" class="tab-content hidden">
+            <div class="card">
+                <div class="card-title">마이 응원 팀 ⚽</div>
+                <div id="team-display" style="display:flex; align-items:center; gap:15px;">
+                    <span id="my-team-logo" style="font-size:40px;">❔</span>
+                    <b id="my-team-name">팀을 선택하세요</b>
+                    <button onclick="showTeamSelect()" style="margin-left:auto; color:var(--toss-blue); border:none; background:none; cursor:pointer;">변경</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">내 아이템</div>
+                <p>📺 VAR 프리패스권: <b id="var-count">0</b>개</p>
+            </div>
+            <div class="card">
+                <div class="card-title">내 응원 내역</div>
+                <div id="my-prediction-list" style="font-size:14px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="nav-bar">
+        <div class="nav-item active" onclick="nav('home')"><span class="nav-icon">🏠</span>홈</div>
+        <div class="nav-item" onclick="nav('match')"><span class="nav-icon">🏟️</span>응원</div>
+        <div class="nav-item" onclick="nav('shop')"><span class="nav-icon">🛒</span>상점</div>
+        <div class="nav-item" onclick="nav('my')"><span class="nav-icon">👤</span>MY</div>
+    </nav>
+
+    <div id="modal-overlay" class="modal-overlay hidden">
+        <div class="modal" id="modal-content"></div>
+    </div>
+</div>
+
+<script>
+    // --- Data & State ---
+    let pts = parseInt(localStorage.getItem('pts')) || 1000;
+    let varCount = parseInt(localStorage.getItem('vars')) || 0;
+    let myTeam = JSON.parse(localStorage.getItem('myTeam')) || null;
+    let qStep = 0, combo = 0, isFailed = false;
+    let allQuestions = { easy: [], hard: [] }, todayQuiz = [];
+
+    const big6 = [
+        {name:"토트넘", logo:"⚪"}, {name:"맨시티", logo:"🔵"}, {name:"맨유", logo:"🔴"},
+        {name:"리버풀", logo:"🔥"}, {name:"아스널", logo:"🔫"}, {name:"첼시", logo:"🦁"}
+    ];
+
+    const matches = [
+        { id: 1, home: "토트넘", away: "맨시티", date: "2026-04-10", time: "23:00", hLog: "⚪", aLog: "🔵" },
+        { id: 2, home: "리버풀", away: "아스널", date: "2026-04-11", time: "01:30", hLog: "🔥", aLog: "🔫" }
+    ];
+
+    // --- Init ---
+    async function init() {
+        try {
+            const res = await fetch('questions.json');
+            allQuestions = await res.json();
+            const shuffle = (a) => a.sort(() => Math.random() - 0.5);
+            todayQuiz = [...shuffle([...allQuestions.easy]).slice(0,2), ...shuffle([...allQuestions.hard]).slice(0,2)];
+            renderQuiz();
+        } catch(e) { document.getElementById('q-text').innerText = "questions.json 로드 실패"; }
+        updateUI();
+    }
+
+    function updateUI() {
+        document.getElementById('u-points').innerText = pts.toLocaleString();
+        document.getElementById('var-count').innerText = varCount;
+        if(myTeam) {
+            document.getElementById('my-team-logo').innerText = myTeam.logo;
+            document.getElementById('my-team-name').innerText = myTeam.name;
+        }
+        localStorage.setItem('pts', pts); localStorage.setItem('vars', varCount);
+        localStorage.setItem('myTeam', JSON.stringify(myTeam));
+    }
+
+    // --- Quiz ---
+    function renderQuiz() {
+        if(isFailed) { document.getElementById('quiz-card').innerHTML = "❌ 내일 다시 도전하세요!"; return; }
+        if(qStep >= 4) { document.getElementById('quiz-card').innerHTML = "🎉 오늘 퀴즈 완료! (+100P 지급됨)"; return; }
+        
+        const q = todayQuiz[qStep];
+        document.getElementById('q-status').innerText = `${qStep < 2 ? '초급' : '고급'} ${qStep+1}/4`;
+        document.getElementById('q-text').innerText = q.q;
+        const opt = document.getElementById('q-options');
+        opt.innerHTML = "";
+        q.a.forEach((txt, i) => {
+            opt.innerHTML += `<button class="btn-ans" onclick="checkAns(${i})">${txt}</button>`;
+        });
+    }
+
+    function checkAns(idx) {
+        if(idx === todayQuiz[qStep].c) {
+            combo++;
+            pts += (qStep < 2 ? 20 : 50) + (combo * 10);
+            qStep++;
+            if(qStep === 4) pts += 100;
+            alert(`정답! ${combo} 콤보 보너스 적용!`);
+            renderQuiz();
+        } else {
+            if(varCount > 0) { showVarModal(); } 
+            else { isFailed = true; alert("오답입니다. 오늘 도전 종료!"); renderQuiz(); }
+        }
+        updateUI();
+    }
+
+    // --- Match ---
+    function renderMatches() {
+        const list = document.getElementById('match-list');
+        const today = new Date().toISOString().split('T')[0];
+        list.innerHTML = `<div class="card-title">승부 응원 🏟️</div>`;
+        matches.forEach(m => {
+            const isMyTeam = myTeam && (m.home === myTeam.name || m.away === myTeam.name);
+            const isClosed = today >= m.date;
+            list.innerHTML += `
+                <div class="match-card">
+                    ${isMyTeam ? '<span class="my-team-tag">MY TEAM</span>' : ''}
+                    <div style="text-align:center; font-size:12px; color:#aaa;">${m.date} ${m.time}</div>
+                    <div class="match-teams">
+                        <div>${m.hLog}<br>${m.home}</div><div>VS</div><div>${m.aLog}<br>${m.away}</div>
+                    </div>
+                    <div class="predict-grid">
+                        <button class="btn-predict" ${isClosed?'disabled':''} onclick="predictWithAd('${m.home} 승')">홈승</button>
+                        <button class="btn-predict" ${isClosed?'disabled':''} onclick="predictWithAd('무승부')">무</button>
+                        <button class="btn-predict" ${isClosed?'disabled':''} onclick="predictWithAd('${m.away} 승')">원정승</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function predictWithAd(pick) {
+        showModal(`
+            <h3>📺 광고 시청 후 응원</h3>
+            <p>[${pick}]을(를) 응원하시겠습니까?<br>성공 시 보너스 포인트가 지급됩니다.</p>
+            <button class="btn-modal-main" onclick="confirmPredict('${pick}')">광고 보고 응원하기</button>
+        `);
+    }
+
+    function confirmPredict(pick) {
+        alert("광고 시청 완료! 응원이 접수되었습니다.");
+        const hist = JSON.parse(localStorage.getItem('preds')) || [];
+        hist.push({pick, status: '결과 대기', date: new Date().toLocaleDateString()});
+        localStorage.setItem('preds', JSON.stringify(hist));
+        closeModal(); renderMyHistory();
+    }
+
+    // --- My Page ---
+    function showTeamSelect() {
+        showModal(`
+            <h3>마이팀 설정</h3>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px;">
+                ${big6.map(t => `<button class="btn-predict" onclick="setMyTeam('${t.name}','${t.logo}')">${t.logo} ${t.name}</button>`).join('')}
+            </div>
+        `);
+    }
+
+    function setMyTeam(name, logo) { myTeam = {name, logo}; updateUI(); closeModal(); }
+
+    function renderMyHistory() {
+        const hist = JSON.parse(localStorage.getItem('preds')) || [];
+        document.getElementById('my-prediction-list').innerHTML = hist.map(h => `
+            <div style="padding:10px 0; border-bottom:1px solid #eee;">
+                <b>${h.pick}</b> <span style="float:right; color:var(--toss-blue);">${h.status}</span>
+            </div>
+        `).join('') || "참여 내역이 없습니다.";
+    }
+
+    // --- Helpers ---
+    function nav(name) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+        document.getElementById('tab-'+name).classList.remove('hidden');
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        if(name === 'match') renderMatches();
+        if(name === 'my') renderMyHistory();
+    }
+
+    function showModal(html) {
+        document.getElementById('modal-content').innerHTML = html + `<button onclick="closeModal()" style="margin-top:15px; border:none; background:none; color:#aaa;">닫기</button>`;
+        document.getElementById('modal-overlay').classList.remove('hidden');
+    }
+    function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); }
+    function showVarModal() {
+        showModal(`<h3>📺 VAR 판독 사용</h3><p>VAR권을 사용해 정답 처리할까요?</p><button class="btn-modal-main" onclick="useVar()">사용하기</button>`);
+    }
+    function useVar() { varCount--; checkAns(todayQuiz[qStep].c); closeModal(); }
+    function buyBox(t) { alert(t + " 박스 구매! 포인트가 소진됩니다."); pts -= (t==='치킨'?1500:500); updateUI(); }
+
+    window.onload = init;
+</script>
+</body>
+</html>
