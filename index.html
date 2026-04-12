@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KICK QUIZ v1.0</title>
+    <title>KICK QUIZ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -11,157 +11,205 @@
         body { font-family: 'NanumSquare', sans-serif; background-color: #f2f4f6; -webkit-tap-highlight-color: transparent; }
         .toss-blue { color: #3182f6; }
         .toss-bg-blue { background-color: #3182f6; }
-        .card { background: white; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .card { background: white; border-radius: 28px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+        .tab-bar { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-top: 1px solid #eee; }
+        .active-tab { color: #3182f6 !important; font-weight: bold; }
         .hidden { display: none; }
-        .btn-primary { background-color: #3182f6; color: white; border-radius: 18px; font-weight: 800; transition: all 0.2s; }
-        .btn-primary:active { transform: scale(0.96); }
+        .btn-option { width: 100%; padding: 20px; border-radius: 20px; background: #f9fafb; font-weight: 700; font-size: 1.1rem; transition: all 0.1s; }
+        .btn-option:active { background: #e8f3ff; transform: scale(0.98); }
+        .pk-btn { background: white; border: 1px solid #e5e8eb; border-radius: 20px; padding: 20px; flex: 1; transition: all 0.1s; }
+        .pk-btn:active { background: #f2f4f6; }
     </style>
 </head>
-<body class="flex flex-col min-h-screen">
+<body class="flex flex-col min-h-screen text-gray-800 pb-20">
 
     <nav class="flex items-center justify-between px-6 py-4 bg-white sticky top-0 z-50">
         <div class="flex items-center space-x-2">
-            <div class="w-8 h-8 toss-bg-blue rounded-full flex items-center justify-center text-white font-bold text-xs">K</div>
-            <span class="font-black text-xl toss-blue">KICK QUIZ</span>
+            <img src="https://img.icons8.com/color/48/soccer-ball--v1.png" class="w-7 h-7">
+            <span class="font-black text-2xl tracking-tighter">KICK QUIZ</span>
         </div>
-        <div class="flex items-center space-x-4">
-            <div class="text-right">
-                <p class="text-[10px] text-gray-400 font-bold">포인트</p>
-                <p class="font-black toss-blue" id="ui-points">0 P</p>
-            </div>
-            <div class="text-right border-l pl-3">
-                <p class="text-[10px] text-gray-400 font-bold">VAR</p>
-                <p class="font-black text-red-500" id="ui-var">0</p>
-            </div>
+        <div class="bg-blue-50 px-4 py-1.5 rounded-full">
+            <span class="font-black toss-blue text-sm" id="ui-points">0 P</span>
         </div>
     </nav>
 
-    <main class="flex-grow p-5 space-y-4 overflow-y-auto">
+    <main class="p-5 space-y-5">
         
-        <section id="view-home" class="space-y-4">
-            <div class="card p-8 text-center space-y-6">
-                <h2 class="text-2xl font-black text-gray-800 italic">DAILY CHALLENGE</h2>
-                <div class="py-4 bg-blue-50 rounded-2xl">
-                    <p class="text-blue-600 text-sm font-bold">오늘의 퀴즈 4문제 완주 시</p>
-                    <p class="text-blue-600 text-xl font-black">추가 보상 100 P</p>
+        <section id="view-home" class="space-y-5">
+            <div class="card p-7 space-y-5">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold">승부차기 🥅</h3>
+                    <span class="text-[11px] bg-gray-100 text-gray-400 px-3 py-1 rounded-full font-bold tracking-tighter">Daily Test</span>
                 </div>
-                <button id="start-btn" onclick="startQuiz()" disabled class="bg-gray-200 text-white w-full py-5 text-lg font-black rounded-2xl">데이터 로딩 중...</button>
+                <p class="text-center font-bold text-gray-600">골키퍼의 방향을 예측하세요!</p>
+                <div class="flex space-x-3">
+                    <button onclick="playPK()" class="pk-btn"><i class="fas fa-arrow-left text-blue-300 text-2xl mb-1"></i><p class="text-xs font-bold text-gray-500">왼쪽</p></button>
+                    <button onclick="playPK()" class="pk-btn"><i class="fas fa-arrow-up text-blue-300 text-2xl mb-1"></i><p class="text-xs font-bold text-gray-500">중앙</p></button>
+                    <button onclick="playPK()" class="pk-btn"><i class="fas fa-arrow-right text-blue-300 text-2xl mb-1"></i><p class="text-xs font-bold text-gray-500">오른쪽</p></button>
+                </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
-                <div class="card p-5 flex flex-col items-center cursor-pointer active:bg-gray-50" onclick="showPK()">
-                    <i class="fas fa-futbol text-2xl mb-2 toss-blue"></i>
-                    <span class="font-black text-gray-700">승부차기</span>
-                    <span class="text-[10px] text-gray-400">성공 시 50P</span>
+            <div class="card p-7 space-y-6">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold">오늘의 퀴즈 📝</h3>
+                    <span id="quiz-badge" class="text-[11px] toss-bg-blue text-white px-3 py-1 rounded-md font-bold tracking-tighter">초급 (1/4)</span>
                 </div>
-                <div class="card p-5 flex flex-col items-center cursor-pointer active:bg-gray-50" onclick="showShop()">
-                    <i class="fas fa-gift text-2xl mb-2 text-orange-400"></i>
-                    <span class="font-black text-gray-700">상점</span>
-                    <span class="text-[10px] text-gray-400">박스 뽑기</span>
+                <div id="quiz-intro" class="text-center space-y-6">
+                    <p id="q-text" class="text-xl font-bold leading-tight pt-2">문제를 불러오고 있습니다...</p>
+                    <div id="q-options" class="space-y-3">
+                        <button class="w-full py-4 bg-gray-100 rounded-2xl animate-pulse"></button>
+                        <button class="w-full py-4 bg-gray-100 rounded-2xl animate-pulse"></button>
+                    </div>
                 </div>
+                <p class="text-center text-gray-400 text-xs font-bold mt-4">🔥 매일 4문제를 모두 맞히면 보너스 100P!</p>
             </div>
         </section>
 
-        <section id="view-quiz" class="hidden space-y-4">
-            <div class="flex justify-between items-center px-2">
-                <span id="quiz-lv" class="text-xs font-black px-3 py-1 bg-blue-100 toss-blue rounded-full">EASY</span>
-                <span id="quiz-step" class="text-sm font-bold text-gray-400">1 / 4</span>
-            </div>
-            <div class="card p-8 min-h-[350px] flex flex-col justify-center text-center relative">
-                <h3 id="q-text" class="text-xl font-bold leading-snug mb-10 text-gray-800"></h3>
-                <div id="q-options" class="space-y-3"></div>
-            </div>
-        </section>
-
-        <section id="view-pk" class="hidden card p-10 text-center space-y-8">
-            <h2 class="text-2xl font-black text-gray-800">🥅 승부차기</h2>
-            <div class="flex justify-center space-x-4 py-10">
-                <button onclick="playPK()" class="w-16 h-16 bg-gray-100 rounded-full text-xl hover:bg-blue-100 transition">⬅️</button>
-                <button onclick="playPK()" class="w-16 h-16 bg-gray-100 rounded-full text-xl hover:bg-blue-100 transition">⬆️</button>
-                <button onclick="playPK()" class="w-16 h-16 bg-gray-100 rounded-full text-xl hover:bg-blue-100 transition">➡️</button>
-            </div>
-            <button onclick="showHome()" class="text-gray-400 text-sm font-bold">뒤로가기</button>
-        </section>
-
-        <section id="view-shop" class="hidden space-y-4">
-            <h2 class="text-xl font-black px-2">포인트 상점</h2>
-            <div class="card p-6 flex justify-between items-center">
-                <div>
-                    <p class="font-black text-gray-800">📦 야식 박스</p>
-                    <p class="text-[10px] text-gray-400">라면, 박카스, VAR권 등</p>
+        <section id="view-shop" class="hidden space-y-4 pt-2">
+            <div onclick="buyBox(500)" class="card p-6 flex items-center justify-between border-2 border-transparent active:border-blue-200">
+                <div class="flex items-center space-x-4">
+                    <div class="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center text-2xl">📦</div>
+                    <div>
+                        <p class="font-bold text-lg">야식 박스 (랜덤)</p>
+                        <p class="text-xs text-gray-400 font-bold">컵라면, 박카스, VAR권 등</p>
+                    </div>
                 </div>
-                <button onclick="buyBox(500)" class="toss-bg-blue text-white px-5 py-2 rounded-xl font-bold text-sm">500 P</button>
+                <div class="toss-bg-blue text-white px-5 py-2.5 rounded-xl font-black text-sm">500 P</div>
             </div>
-            <button onclick="showHome()" class="w-full text-center text-gray-400 text-sm py-4">뒤로가기</button>
+
+            <div onclick="buyBox(1500)" class="card p-6 flex items-center justify-between border-2 border-yellow-200 active:bg-yellow-50">
+                <div class="flex items-center space-x-4">
+                    <div class="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center text-2xl">🍗</div>
+                    <div>
+                        <p class="font-bold text-lg">황금 치킨박스</p>
+                        <p class="text-xs text-gray-400 font-bold">치킨, 커피, VAR 대량 획득!</p>
+                    </div>
+                </div>
+                <div class="toss-bg-blue text-white px-5 py-2.5 rounded-xl font-black text-sm">1,500 P</div>
+            </div>
+
+            <div class="card p-6 text-sm text-gray-500 leading-relaxed">
+                <p class="font-bold text-gray-800 mb-1">🎁 당첨 상품 수령 안내</p>
+                기프티콘(치킨, 커피 등) 당첨 시, 화면을 캡처하여 오픈채팅방으로 보내주시면 확인 후 지급해 드립니다.
+            </div>
+        </section>
+
+        <section id="view-my" class="hidden space-y-5 pt-2">
+            <div class="card p-7 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <span class="text-2xl">💌</span>
+                    <div>
+                        <p class="font-bold">친구 초대</p>
+                        <p class="text-[11px] text-gray-400">초대할 때마다 <span class="font-black">250P</span> 지급! (0/1)</p>
+                    </div>
+                </div>
+                <button class="toss-bg-blue text-white px-4 py-1.5 rounded-lg text-xs font-bold">초대하기</button>
+            </div>
+
+            <div class="card p-7 space-y-4">
+                <p class="font-bold text-lg">🎒 내 가방</p>
+                <div id="my-inventory" class="text-center py-10 text-gray-300 font-bold text-sm">
+                    보유한 아이템이 없습니다.
+                </div>
+            </div>
+
+            <div class="card p-7 space-y-6">
+                <div class="flex items-center justify-between">
+                    <p class="font-bold text-lg text-gray-800">📜 승부예측 기록</p>
+                    <button class="bg-gray-800 text-white px-4 py-1.5 rounded-lg text-xs font-bold flex items-center"><i class="fas fa-trophy mr-1 text-orange-400"></i> 결과 확인</button>
+                </div>
+                <div class="text-center py-8 text-gray-300 font-bold text-sm">기록 없음</div>
+            </div>
+
+            <div class="flex flex-col items-center space-y-6 pt-4">
+                <button onclick="window.location.href='https://open.kakao.com/o/sn6xyrbi'" class="bg-yellow-300 text-gray-800 px-6 py-3 rounded-2xl font-black flex items-center shadow-sm active:scale-95 transition-transform">
+                    <i class="fas fa-comment mr-2"></i> 문의하기 / 경품 수령
+                </button>
+                <button onclick="localStorage.clear(); location.reload();" class="text-[10px] text-gray-300 border-b border-gray-200 pb-0.5 tracking-tighter">🚨 데이터 초기화</button>
+            </div>
         </section>
 
     </main>
 
+    <nav class="tab-bar fixed bottom-0 left-0 right-0 h-20 flex items-center justify-around px-2 z-50">
+        <button onclick="showView('home')" class="flex flex-col items-center space-y-1 text-gray-400 active-tab" id="tab-home">
+            <i class="fas fa-home text-lg"></i><span class="text-[10px]">홈</span>
+        </button>
+        <button onclick="showView('predict')" class="flex flex-col items-center space-y-1 text-gray-400" id="tab-predict">
+            <i class="fas fa-chart-line text-lg"></i><span class="text-[10px]">승부예측</span>
+        </button>
+        <button onclick="showView('shop')" class="flex flex-col items-center space-y-1 text-gray-400" id="tab-shop">
+            <i class="fas fa-shopping-cart text-lg"></i><span class="text-[10px]">상점</span>
+        </button>
+        <button onclick="showView('my')" class="flex flex-col items-center space-y-1 text-gray-400" id="tab-my">
+            <i class="fas fa-user text-lg"></i><span class="text-[10px]">MY</span>
+        </button>
+    </nav>
+
     <script>
-        let state = { points: 0, varCount: 0, step: 0, questions: null };
+        let state = { points: 1000, varCount: 0, step: 0, questions: null };
 
         async function init() {
             try {
                 const res = await fetch('questions.json');
                 state.questions = await res.json();
-                const btn = document.getElementById('start-btn');
-                btn.disabled = false;
-                btn.innerText = "챌린지 시작하기";
-                btn.className = "btn-primary w-full py-5 text-lg shadow-lg shadow-blue-100";
+                showQuestion();
             } catch (e) {
-                console.error("Data load error:", e);
+                document.getElementById('q-text').innerText = "데이터 로드 실패";
             }
         }
 
-        function showView(viewId) {
-            ['view-home', 'view-quiz', 'view-pk', 'view-shop'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
-            });
-            document.getElementById(viewId).classList.remove('hidden');
-        }
-
-        function showHome() { showView('view-home'); }
-        function showPK() { showView('view-pk'); }
-        function showShop() { showView('view-shop'); }
-
-        function startQuiz() {
-            state.step = 0;
-            showView('view-quiz');
-            showQuestion();
+        function showView(name) {
+            ['view-home', 'view-shop', 'view-my'].forEach(v => document.getElementById(v).classList.add('hidden'));
+            ['tab-home', 'tab-predict', 'tab-shop', 'tab-my'].forEach(t => document.getElementById(t).classList.remove('active-tab'));
+            
+            if(name === 'home') {
+                document.getElementById('view-home').classList.remove('hidden');
+                document.getElementById('tab-home').classList.add('active-tab');
+            } else if(name === 'shop') {
+                document.getElementById('view-shop').classList.remove('hidden');
+                document.getElementById('tab-shop').classList.add('active-tab');
+            } else if(name === 'my') {
+                document.getElementById('view-my').classList.remove('hidden');
+                document.getElementById('tab-my').classList.add('active-tab');
+            }
+            window.scrollTo(0,0);
         }
 
         function showQuestion() {
             const pool = state.step < 2 ? state.questions.easy : state.questions.hard;
             const q = pool[Math.floor(Math.random() * pool.length)];
             
-            document.getElementById('quiz-lv').innerText = state.step < 2 ? "EASY" : "HARD 🔥";
-            document.getElementById('quiz-step').innerText = `${state.step + 1} / 4`;
-            document.getElementById('q-text').innerText = q.q;
+            const badge = document.getElementById('quiz-badge');
+            badge.innerText = state.step < 2 ? `초급 (${state.step+1}/4)` : `고급 (${state.step+1}/4)`;
+            badge.className = state.step < 2 ? "text-[11px] toss-bg-blue text-white px-3 py-1 rounded-md font-bold tracking-tighter" : "text-[11px] bg-red-500 text-white px-3 py-1 rounded-md font-bold tracking-tighter";
             
+            document.getElementById('q-text').innerText = q.q;
             const optDiv = document.getElementById('q-options');
             optDiv.innerHTML = '';
             q.a.forEach((opt, idx) => {
                 const btn = document.createElement('button');
-                btn.className = "w-full py-4 border-2 border-gray-100 rounded-2xl font-bold bg-white active:bg-blue-50";
+                btn.className = "btn-option";
                 btn.innerText = opt;
                 btn.onclick = () => {
                     if (idx === q.c) {
                         state.points += (state.step < 2 ? 20 : 50);
                         if (state.step === 3) {
-                            alert("완주 보너스 100P 지급!");
+                            alert("🎊 챌린지 완주! 100P 추가 보상!");
                             state.points += 100;
-                            location.reload();
+                            state.step = 0;
                         } else {
                             state.step++;
-                            showQuestion();
                         }
+                        showQuestion();
                     } else {
-                        if (state.varCount > 0 && confirm("VAR권을 사용하여 부활하시겠습니까?")) {
+                        if(state.varCount > 0 && confirm("VAR권을 사용하여 부활하시겠습니까?")) {
                             state.varCount--;
-                            updateUI();
+                            renderInventory();
                         } else {
                             alert("오답입니다! 내일 다시 도전하세요.");
-                            location.reload();
+                            state.step = 0;
+                            showQuestion();
                         }
                     }
                     updateUI();
@@ -173,32 +221,43 @@
         function playPK() {
             if (Math.random() < 0.5) {
                 state.points += 50;
-                alert("⚽ GOAL! 50P 획득!");
+                alert("⚽ GOAL! 50P를 획득했습니다!");
             } else {
-                alert("🧤 막혔습니다! 아쉽네요.");
+                alert("🧤 막혔습니다! 골키퍼의 선방입니다.");
             }
             updateUI();
-            showHome();
         }
 
         function buyBox(price) {
             if (state.points < price) return alert("포인트가 부족합니다.");
             state.points -= price;
             const r = Math.random() * 100;
-            if (r < 5) alert("🎁 당첨! 육개장 기프티콘 (오픈카톡으로 연락주세요)");
+            if (r < 5) alert("🍜 당첨! 육개장 사발면 기프티콘!");
             else if (r < 45) {
                 state.varCount++;
                 alert("🎟️ VAR 프리패스권을 획득했습니다!");
+                renderInventory();
             } else {
-                state.points += 100;
-                alert("꽝! 위로금 100P를 돌려드립니다.");
+                state.points += (price === 500 ? 100 : 500);
+                alert("꽝! 위로금 포인트가 지급되었습니다.");
             }
             updateUI();
         }
 
+        function renderInventory() {
+            const inv = document.getElementById('my-inventory');
+            if(state.varCount > 0) {
+                inv.innerHTML = `<div class="flex items-center justify-between bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                    <div class="flex items-center space-x-3"><span class="text-xl">🎟️</span><span class="font-bold">VAR 프리패스권</span></div>
+                    <span class="toss-blue font-black">${state.varCount}개</span>
+                </div>`;
+            } else {
+                inv.innerHTML = `보유한 아이템이 없습니다.`;
+            }
+        }
+
         function updateUI() {
-            document.getElementById('ui-points').innerText = `${state.points} P`;
-            document.getElementById('ui-var').innerText = state.varCount;
+            document.getElementById('ui-points').innerText = `${state.points.toLocaleString()} P`;
         }
 
         window.onload = init;
