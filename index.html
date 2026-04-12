@@ -142,12 +142,12 @@
     // --- Init ---
     async function init() {
         try {
-            const res = await fetch('questions.json');
+            const res = await fetch('question.json');
             allQuestions = await res.json();
             const shuffle = (a) => a.sort(() => Math.random() - 0.5);
             todayQuiz = [...shuffle([...allQuestions.easy]).slice(0,2), ...shuffle([...allQuestions.hard]).slice(0,2)];
             renderQuiz();
-        } catch(e) { document.getElementById('q-text').innerText = "questions.json 로드 실패"; }
+        } catch(e) { document.getElementById('q-text').innerText = "question.json 로드 실패"; }
         updateUI();
     }
 
