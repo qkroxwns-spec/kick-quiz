@@ -132,9 +132,35 @@
     </nav>
 
     <script>
+        // 🏎️ 1. 글로벌 게임 상태 관리 (로컬 저장소 연동)
         let state = { points: 1000, varCount: 0, step: 0, streak: 0, questions: null };
 
+        // 💾 데이터 로컬 저장 및 불러오기 엔진
+        function saveState() {
+            localStorage.setItem('kick_quiz_user_data', JSON.stringify({
+                points: state.points,
+                varCount: state.varCount,
+                step: state.step,
+                streak: state.streak
+            }));
+        }
+
+        function loadState() {
+            const savedData = localStorage.getItem('kick_quiz_user_data');
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                state.points = parsed.points ?? 1000;
+                state.varCount = parsed.varCount ?? 0;
+                state.step = parsed.step ?? 0;
+                state.streak = parsed.streak ?? 0;
+            }
+        }
+
+        // 📂 2. 앱 초기화 엔진 (버그 수정 버전)
         async function init() {
+            loadState(); // 1. 저장된 유저 데이터 먼저 불러오기
+            updateUI();  // 2. 초기 0P 깜빡임 버그 즉시 해결!
+            
             try {
                 const res = await fetch('questions.json');
                 state.questions = await res.json();
@@ -153,6 +179,7 @@
             window.scrollTo(0,0);
         }
 
+        // 📝 3. 스테이지형 퀴즈 검수 시스템
         function showQuestion() {
             if (!state.questions) return;
             const pool = state.step < 2 ? state.questions.easy : state.questions.hard;
@@ -179,18 +206,19 @@
                         } else {
                             state.step++;
                         }
-                        showQuestion();
                     } else {
                         alert("오답입니다! 내일 다시 도전해 보세요.");
                         state.step = 0;
-                        showQuestion();
                     }
+                    saveState(); // 상태 저장
+                    showQuestion();
                     updateUI();
                 };
                 optDiv.appendChild(btn);
             });
         }
 
+        // 🥅 4. 승부차기 타격 확률 로직
         function playPK() {
             if (Math.random() < 0.5) {
                 state.points += 50;
@@ -198,24 +226,34 @@
             } else {
                 alert("🧤 막혔습니다! 골키퍼 선방입니다.");
             }
+            saveState(); // 상태 저장
             updateUI();
         }
 
+        // 📊 5. 1/N 승부예측 시스템 (컴플라이언스 가이드 준수)
         function predictMatch(teamChoice) {
-            alert(`[${teamChoice}] 무료 예측 완료! \n경기가 종료되면 적중자 전원에게 총상금이 1/N 분배되며, 대표님의 연승 부스터가 곱해집니다.`);
-            state.streak++; // 시뮬레이션용 연승 카운트 증가
-            document.getElementById('ui-streak').innerText = `현재 ${state.streak}연승 중`;
+            alert(`[${teamChoice}] 무료 예측 완료! \n\nEPL 경기가 종료되면 직원 1호(데이터 엔지니어)가 스코어를 정산합니다. 적중 시 1/N 배당금과 함께 현재 [${state.streak}연승 부스터]가 적용됩니다!`);
+            
+            // TODO: 실제 출시 시점에는 크롤러 API 응답 결과에 따라 연승을 가감해야 하므로, 
+            // 현재는 시뮬레이션용 데이터로 유지보수합니다.
+            state.streak++; 
+            saveState(); // 상태 저장
+            updateUI();
         }
 
+        // 📦 6. 포인트 아이템 상점
         function buyBox(price) {
             if (state.points < price) return alert("포인트가 부족합니다.");
             state.points -= price;
-            alert("📦 상점 박스 구매 완료!");
+            alert("📦 상점 박스 구매 완료! 야식이 배달될 때까지 대기해 주세요.");
+            saveState(); // 상태 저장
             updateUI();
         }
 
+        // 📺 7. 전역 데이터 UI 동기화
         function updateUI() {
             document.getElementById('ui-points').innerText = `${state.points.toLocaleString()} P`;
+            document.getElementById('ui-streak').innerText = `현재 ${state.streak}연승 중`;
         }
 
         window.onload = init;
