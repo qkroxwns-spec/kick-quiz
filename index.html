@@ -32,7 +32,7 @@
             <span class="font-black text-2xl tracking-tighter text-gray-900">KICK QUIZ</span>
         </div>
         <div class="bg-blue-50 px-4 py-1.5 rounded-full">
-            <span class="font-black toss-blue text-sm" id="ui-points">0 P</span>
+            <span class="font-black toss-blue text-sm" id="ui-points">1,000 P</span>
         </div>
     </nav>
 
@@ -78,34 +78,12 @@
                     <span class="text-xs text-gray-400">참여비 무료 (0P)</span>
                 </div>
                 <div id="match-list" class="space-y-5">
-                    <div class="p-4 border border-gray-100 rounded-2xl space-y-4">
-                        <div class="flex justify-between text-xs font-bold text-gray-400">
-                            <span>PREMIER LEAGUE</span>
-                            <span>내일 04:00</span>
-                        </div>
-                        <div class="flex items-center justify-around py-2">
-                            <div class="flex flex-col items-center space-y-1">
-                                <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-lg">🔴</div>
-                                <span class="font-bold text-xs">아스널</span>
-                            </div>
-                            <span class="font-black text-gray-300">VS</span>
-                            <div class="flex flex-col items-center space-y-1">
-                                <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-lg">⚪</div>
-                                <span class="font-bold text-xs">토트넘</span>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-3 gap-2">
-                            <button onclick="predictMatch('아스널 승')" class="py-2.5 bg-blue-50 text-blue-600 text-xs font-bold rounded-xl active:scale-95 transition-all">아스널 승<br><span class="text-[10px] text-gray-400 font-normal">예상 1.4배</span></button>
-                            <button onclick="predictMatch('무승부')" class="py-2.5 bg-gray-50 text-gray-500 text-xs font-bold rounded-xl active:scale-95 transition-all">무승부<br><span class="text-[10px] text-gray-400 font-normal">예상 3.2배</span></button>
-                            <button onclick="predictMatch('토트넘 승')" class="py-2.5 bg-blue-50 text-blue-600 text-xs font-bold rounded-xl active:scale-95 transition-all">토트넘 승<br><span class="text-[10px] text-gray-400 font-normal">예상 4.8배</span></button>
-                        </div>
                     </div>
-                </div>
             </div>
         </section>
 
         <section id="view-shop" class="hidden space-y-4">
-            <div onclick="buyBox(500)" class="card p-6 flex items-center justify-between active:border-blue-200 border-2 border-transparent">
+            <div onclick="buyBox(500)" class="card p-6 flex items-center justify-between active:border-blue-200 border-2 border-transparent cursor-pointer">
                 <div class="flex items-center space-x-4">
                     <div class="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center text-2xl">📦</div>
                     <div>
@@ -132,10 +110,17 @@
     </nav>
 
     <script>
-        // 🏎️ 1. 글로벌 게임 상태 관리 (로컬 저장소 연동)
+        // 1. 글로벌 게임 상태 상태 정의
         let state = { points: 1000, varCount: 0, step: 0, streak: 0, questions: null };
 
-        // 💾 데이터 로컬 저장 및 불러오기 엔진
+        // 📅 주간 매치 라인업 원천 데이터셋 (직원 1호 전담 파트)
+        const weeklyMatches = [
+            { id: "M01", league: "PREMIER LEAGUE", time: "내일 04:00", home: { name: "아스널", icon: "🔴" }, away: { name: "토트넘", icon: "⚪" }, odds: { home: 1.4, draw: 3.2, away: 4.8 } },
+            { id: "M02", league: "PREMIER LEAGUE", time: "08.30 23:00", home: { name: "맨시티", icon: "🔵" }, away: { name: "리버풀", icon: "🔴" }, odds: { home: 1.8, draw: 3.5, away: 3.2 } },
+            { id: "M03", league: "PREMIER LEAGUE", time: "08.31 01:30", home: { name: "첼시", icon: "🔵" }, away: { name: "맨유", icon: "🔴" }, odds: { home: 2.1, draw: 3.1, away: 2.9 } }
+        ];
+
+        // 💾 브라우저 스토리지 상시 세이브/로드 기능
         function saveState() {
             localStorage.setItem('kick_quiz_user_data', JSON.stringify({
                 points: state.points,
@@ -156,10 +141,11 @@
             }
         }
 
-        // 📂 2. 앱 초기화 엔진 (버그 수정 버전)
+        // 📂 2. 앱 토탈 구동 초기화 함수
         async function init() {
-            loadState(); // 1. 저장된 유저 데이터 먼저 불러오기
-            updateUI();  // 2. 초기 0P 깜빡임 버그 즉시 해결!
+            loadState();    // 스토리지 복구
+            updateUI();     // 0P 초기 노출 차단 가드
+            renderMatches(); // 매치 동적 구축
             
             try {
                 const res = await fetch('questions.json');
@@ -170,6 +156,7 @@
             }
         }
 
+        // 📺 3. 뷰/탭 라우팅 매니저
         function showView(name) {
             ['view-home', 'view-predict', 'view-shop'].forEach(v => document.getElementById(v).classList.add('hidden'));
             ['tab-home', 'tab-predict', 'tab-shop'].forEach(t => document.getElementById(t).classList.remove('active-tab'));
@@ -179,7 +166,7 @@
             window.scrollTo(0,0);
         }
 
-        // 📝 3. 스테이지형 퀴즈 검수 시스템
+        // 📝 4. 난이도별 스마트 퀴즈 가동 로직
         function showQuestion() {
             if (!state.questions) return;
             const pool = state.step < 2 ? state.questions.easy : state.questions.hard;
@@ -210,7 +197,7 @@
                         alert("오답입니다! 내일 다시 도전해 보세요.");
                         state.step = 0;
                     }
-                    saveState(); // 상태 저장
+                    saveState();
                     showQuestion();
                     updateUI();
                 };
@@ -218,7 +205,7 @@
             });
         }
 
-        // 🥅 4. 승부차기 타격 확률 로직
+        // 🥅 5. 피지컬 미니게임 (승부차기 50% 확률 연산)
         function playPK() {
             if (Math.random() < 0.5) {
                 state.points += 50;
@@ -226,31 +213,62 @@
             } else {
                 alert("🧤 막혔습니다! 골키퍼 선방입니다.");
             }
-            saveState(); // 상태 저장
+            saveState();
             updateUI();
         }
 
-        // 📊 5. 1/N 승부예측 시스템 (컴플라이언스 가이드 준수)
-        function predictMatch(teamChoice) {
-            alert(`[${teamChoice}] 무료 예측 완료! \n\nEPL 경기가 종료되면 직원 1호(데이터 엔지니어)가 스코어를 정산합니다. 적중 시 1/N 배당금과 함께 현재 [${state.streak}연승 부스터]가 적용됩니다!`);
-            
-            // TODO: 실제 출시 시점에는 크롤러 API 응답 결과에 따라 연승을 가감해야 하므로, 
-            // 현재는 시뮬레이션용 데이터로 유지보수합니다.
+        // 📊 6. 매치 동적 리스트 주입 파이프라인
+        function renderMatches() {
+            const matchListDiv = document.getElementById('match-list');
+            matchListDiv.innerHTML = ''; 
+
+            weeklyMatches.forEach(match => {
+                const matchHtml = `
+                    <div class="p-4 border border-gray-100 rounded-2xl space-y-4 bg-white">
+                        <div class="flex justify-between text-xs font-bold text-gray-400">
+                            <span>${match.league}</span>
+                            <span>${match.time}</span>
+                        </div>
+                        <div class="flex items-center justify-around py-2">
+                            <div class="flex flex-col items-center space-y-1">
+                                <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-lg">${match.home.icon}</div>
+                                <span class="font-bold text-xs">${match.home.name}</span>
+                            </div>
+                            <span class="font-black text-gray-300">VS</span>
+                            <div class="flex flex-col items-center space-y-1">
+                                <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-lg">${match.away.icon}</div>
+                                <span class="font-bold text-xs">${match.away.name}</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button onclick="predictMatch('${match.id}', '${match.home.name} 승')" class="py-2.5 bg-blue-50 text-blue-600 text-xs font-bold rounded-xl active:scale-95 transition-all">${match.home.name} 승<br><span class="text-[10px] text-gray-400 font-normal">예상 ${match.odds.home}배</span></button>
+                            <button onclick="predictMatch('${match.id}', '무승부')" class="py-2.5 bg-gray-50 text-gray-500 text-xs font-bold rounded-xl active:scale-95 transition-all">무승부<br><span class="text-[10px] text-gray-400 font-normal">예상 ${match.odds.draw}배</span></button>
+                            <button onclick="predictMatch('${match.id}', '${match.away.name} 승')" class="py-2.5 bg-blue-50 text-blue-600 text-xs font-bold rounded-xl active:scale-95 transition-all">${match.away.name} 승<br><span class="text-[10px] text-gray-400 font-normal">예상 ${match.odds.away}배</span></button>
+                        </div>
+                    </div>
+                `;
+                matchListDiv.innerHTML += matchHtml;
+            });
+        }
+
+        // 📊 7. 승부예측 무배당 안전 처리 로직
+        function predictMatch(matchId, choice) {
+            alert(`[예측 완료] 선택: ${choice} \n\n경기가 종료되면 정산이 진행됩니다. 성공 시 현재 [${state.streak}연승 부스터]가 적용됩니다!`);
             state.streak++; 
-            saveState(); // 상태 저장
+            saveState();
             updateUI();
         }
 
-        // 📦 6. 포인트 아이템 상점
+        // 📦 8. 재화 상점 결제 정산 로직
         function buyBox(price) {
             if (state.points < price) return alert("포인트가 부족합니다.");
             state.points -= price;
             alert("📦 상점 박스 구매 완료! 야식이 배달될 때까지 대기해 주세요.");
-            saveState(); // 상태 저장
+            saveState();
             updateUI();
         }
 
-        // 📺 7. 전역 데이터 UI 동기화
+        // 📺 9. UI 데이터 동기화 파싱
         function updateUI() {
             document.getElementById('ui-points').innerText = `${state.points.toLocaleString()} P`;
             document.getElementById('ui-streak').innerText = `현재 ${state.streak}연승 중`;
