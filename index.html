@@ -1,280 +1,597 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KICK QUIZ</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        @import url('https://fonts.googleapis.com/gh/okone7/font/nanumsquare.css');
-        body { font-family: 'NanumSquare', sans-serif; background-color: #f2f4f6; -webkit-tap-highlight-color: transparent; }
-        .toss-blue { color: #3182f6; }
-        .toss-bg-blue { background-color: #3182f6; }
-        .card { background: white; border-radius: 28px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-        .tab-bar { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-top: 1px solid #eee; }
-        .active-tab { color: #3182f6 !important; font-weight: bold; }
-        .hidden { display: none; }
-        .btn-option { width: 100%; padding: 20px; border-radius: 20px; background: #f9fafb; font-weight: 700; font-size: 1.1rem; transition: all 0.1s; text-align: left; }
-        .btn-option:active { background: #e8f3ff; transform: scale(0.98); }
-        .pk-btn { background: white; border: 1px solid #e5e8eb; border-radius: 20px; padding: 20px; flex: 1; transition: all 0.1s; }
-        .pk-btn:active { background: #f2f4f6; }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>KICK QUIZ</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+<style>
+  body {
+    font-family: -apple-system, "Apple SD Gothic Neo", "Pretendard",
+      "Noto Sans KR", Roboto, system-ui, sans-serif;
+    background-color: #F2F4F6;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #app-content { padding-bottom: 96px; }
+
+  #toast {
+    transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+
+  /* 상표권 우회용 2D 플랫 유니폼 배지 */
+  .jersey-kit {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 2px 4px rgba(255,255,255,0.2), 0 2px 6px rgba(0,0,0,0.06);
+  }
+
+  .pk-btn {
+    background: white;
+    border: 1px solid #e5e8eb;
+    border-radius: 20px;
+    padding: 20px;
+    flex: 1;
+    transition: all 0.1s;
+  }
+  .pk-btn:active { background: #f2f4f6; }
+
+  ::-webkit-scrollbar { display: none; }
+</style>
 </head>
-<body class="flex flex-col min-h-screen text-gray-800 pb-20">
 
-    <nav class="flex items-center justify-between px-6 py-3 bg-white sticky top-0 z-50 border-b border-gray-100">
-        <div class="flex items-center space-x-3">
-            <div class="w-11 h-11 toss-bg-blue rounded-xl flex items-center justify-center shadow-sm relative border border-blue-600">
-                <span class="text-2xl">⚽</span>
-                <span class="absolute top-0 right-1 text-white font-black text-sm drop-shadow-md">?</span>
-            </div>
-            <span class="font-black text-2xl tracking-tighter text-gray-900">KICK QUIZ</span>
-        </div>
-        <div class="bg-blue-50 px-4 py-1.5 rounded-full">
-            <span class="font-black toss-blue text-sm" id="ui-points">1,000 P</span>
-        </div>
+<body class="min-h-screen">
+
+  <div class="max-w-md mx-auto min-h-screen bg-[#F2F4F6] relative">
+
+    <header class="sticky top-0 z-20 bg-[#F2F4F6]/95 backdrop-blur px-5 pt-5 pb-3 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl">⚽</span>
+        <h1 class="text-lg font-extrabold text-[#191F28] tracking-tight">KICK QUIZ</h1>
+      </div>
+      <div id="points-pill" class="flex items-center gap-1 bg-white rounded-[20px] px-3 py-1.5 shadow-sm">
+        <i class="fa-solid fa-coins text-[#3182f6] text-sm"></i>
+        <span id="points-value" class="text-sm font-bold text-[#191F28]">0 P</span>
+      </div>
+    </header>
+
+    <main id="app-content" class="px-5 pt-1"></main>
+
+    <div id="toast"
+         class="fixed bottom-24 left-1/2 -translate-x-1/2 max-w-[88%] bg-[#191F28] text-white text-sm font-medium
+                px-4 py-3 rounded-[20px] shadow-lg opacity-0 translate-y-4 pointer-events-none z-40 text-center">
+    </div>
+
+    <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-[#F2F4F6] flex z-20">
+      <button data-action="go-tab" data-tab="home" class="nav-btn flex-1 flex flex-col items-center gap-1 py-3">
+        <i class="fa-solid fa-house text-lg"></i>
+        <span class="text-[11px] font-semibold">홈</span>
+      </button>
+      <button data-action="go-tab" data-tab="shop" class="nav-btn flex-1 flex flex-col items-center gap-1 py-3">
+        <i class="fa-solid fa-gift text-lg"></i>
+        <span class="text-[11px] font-semibold">간식박스</span>
+      </button>
+      <button data-action="go-tab" data-tab="my" class="nav-btn flex-1 flex flex-col items-center gap-1 py-3">
+        <i class="fa-solid fa-user text-lg"></i>
+        <span class="text-[11px] font-semibold">MY</span>
+      </button>
     </nav>
+  </div>
 
-    <main class="p-5 space-y-5">
-        
-        <section id="view-home" class="space-y-5">
-            <div class="card p-7 space-y-5">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-xl font-bold">승부차기 🥅</h3>
-                    <span class="text-[11px] bg-gray-100 text-gray-400 px-3 py-1 rounded-full font-bold">Daily Test</span>
-                </div>
-                <div class="flex space-x-3">
-                    <button onclick="playPK()" class="pk-btn"><i class="fas fa-arrow-left text-blue-300 text-2xl mb-1"></i><p class="text-xs font-bold text-gray-400">왼쪽</p></button>
-                    <button onclick="playPK()" class="pk-btn"><i class="fas fa-arrow-up text-blue-300 text-2xl mb-1"></i><p class="text-xs font-bold text-gray-400">중앙</p></button>
-                    <button onclick="playPK()" class="pk-btn"><i class="fas fa-arrow-right text-blue-300 text-2xl mb-1"></i><p class="text-xs font-bold text-gray-400">오른쪽</p></button>
-                </div>
+<script>
+/* =========================================================================
+   KICK QUIZ — 최종 사양 마스터 자바스크립트 엔진 (1일 1회 상점 가든 장착)
+   ========================================================================= */
+
+  const STORAGE_KEY = "kickquiz_state_final";
+  // 🔗 대표님의 수동 정산용 오픈카카오톡 주소 입력 공간
+  const OPEN_KAKAO_URL = "https://open.kakao.com/o/sn6xyrbi"; 
+
+  function todayStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+
+  function yesterdayStr() {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+
+  let toastTimer = null;
+  function showToast(message) {
+    const toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.classList.remove("opacity-0", "translate-y-4");
+    toast.classList.add("opacity-100", "translate-y-0");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      toast.classList.add("opacity-0", "translate-y-4");
+      toast.classList.remove("opacity-100", "translate-y-0");
+    }, 2500);
+  }
+
+  // ===================== 1. 핵심 유저 상태 정의 =====================
+  function defaultState() {
+    return {
+      points: 1000,
+      participationStreak: 0,
+      lastParticipationDate: null,
+
+      // 1일 1회 통제 가드레일 시스템
+      lastQuizDate: "",     
+      lastPkDate: "",       
+      lastBoxDate: "", // 👈 [우리 방식] 간식 상자 뽑기 하루 1회 통제용 변수 고정
+
+      coupons: [], // 당첨 내역 보관함
+      activeQuizSession: null 
+    };
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return defaultState();
+      return Object.assign(defaultState(), JSON.parse(raw));
+    } catch (e) {
+      return defaultState();
+    }
+  }
+
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function recordParticipationToday() {
+    const today = todayStr();
+    if (state.lastParticipationDate === today) return;
+    if (state.lastParticipationDate === yesterdayStr()) {
+      state.participationStreak += 1;
+    } else {
+      state.participationStreak = 1;
+    }
+    state.lastParticipationDate = today;
+  }
+
+  // ===================== 2. 로고 저작권 우회 매치 데이터셋 =====================
+  const weeklyMatches = [
+    {
+      id: "M01",
+      league: "PREMIER LEAGUE",
+      time: "내일 04:00",
+      home: { name: "아스널", short: "ARS", primary: "#EF0107", secondary: "#FFFFFF" },
+      away: { name: "토트넘", short: "TOT", primary: "#FFFFFF", secondary: "#132257" }
+    },
+    {
+      id: "M02",
+      league: "PREMIER LEAGUE",
+      time: "08.30 23:00",
+      home: { name: "맨시티", short: "MCI", primary: "#6CABDD", secondary: "#FFFFFF" },
+      away: { name: "리버풀", short: "LIV", primary: "#C8102E", secondary: "#F6EB61" }
+    },
+    {
+      id: "M03",
+      league: "PREMIER LEAGUE",
+      time: "08.31 01:30",
+      home: { name: "첼시", short: "CHE", primary: "#034694", secondary: "#FFFFFF" },
+      away: { name: "맨유", short: "MUN", primary: "#DA291C", secondary: "#000000" }
+    }
+  ];
+
+  let state = loadState();
+  let currentTab = "home";
+
+  // ===================== 3. 메인 화면 렌더링 파트 =====================
+  function renderHome() {
+    const main = document.getElementById("app-content");
+    main.innerHTML = `
+      ${renderQuizCard()}
+      ${renderShootoutCard()}
+      ${renderMatchesCard()}
+    `;
+  }
+
+  function renderQuizCard() {
+    const q = state.quiz;
+    const doneToday = state.lastQuizDate === todayStr();
+
+    if (doneToday) {
+      return `
+      <section class="bg-white rounded-[28px] p-5 mb-4 shadow-sm">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="font-bold text-[#191F28]">📝 오늘의 퀴즈</h2>
+          <span class="text-xs font-semibold text-[#8B95A1]">참여 완료</span>
+        </div>
+        <p class="text-sm text-[#4E5968] leading-relaxed font-medium">
+          오늘 준비된 4문항을 모두 확인하셨습니다. 참여 리워드가 안전하게 계정에 정산되었습니다.
+        </p>
+        <p class="text-xs text-[#8B95A1] mt-2">새로운 축구 퀴즈 세트는 내일 다시 출제됩니다!</p>
+      </section>`;
+    }
+
+    if (state.activeQuizSession) {
+      const session = state.activeQuizSession;
+      const question = session.questions[session.index];
+      const progress = `${session.index + 1} / 4`;
+      const levelBadge = session.index < 2 ? '초급' : '고급';
+      
+      return `
+      <section class="bg-white rounded-[28px] p-5 mb-4 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-bold text-[#191F28]">📝 오늘의 퀴즈 챌린지</h2>
+          <span class="text-xs font-bold bg-blue-50 text-[#3182f6] px-2 py-0.5 rounded-md">${levelBadge} ${progress}</span>
+        </div>
+        <p class="text-[15px] font-bold text-[#191F28] mb-4 leading-snug">${question.q}</p>
+        <div class="flex flex-col gap-2">
+          ${question.a.map((choice, idx) => `
+            <button data-action="answer-quiz" data-idx="${idx}"
+              class="quiz-choice-btn text-left text-sm font-bold text-[#191F28] bg-[#F2F4F6]
+                     rounded-[20px] px-4 py-3.5 active:bg-[#E8ECEF] transition">
+              ${choice}
+            </button>
+          `).join("")}
+        </div>
+        <div id="quiz-feedback" class="text-sm font-semibold mt-3 min-h-[20px]"></div>
+      </section>`;
+    }
+
+    return `
+    <section class="bg-white rounded-[28px] p-5 mb-4 shadow-sm">
+      <h2 class="font-bold text-[#191F28] mb-1">📝 오늘의 퀴즈 챌린지</h2>
+      <p class="text-sm text-[#8B95A1] mb-4">초급 2문제 + 고급 2문제 순차 도전! 참여만 해도 리워드 혜택 지급.</p>
+      <button data-action="start-quiz"
+        class="w-full bg-[#3182f6] text-white font-bold text-sm rounded-[20px] py-3.5 shadow-sm active:scale-[0.99]">
+        오늘의 퀴즈 시작하기
+      </button>
+    </section>`;
+  }
+
+  function renderShootoutCard() {
+    const doneToday = state.lastPkDate === todayStr();
+
+    if (doneToday) {
+      return `
+      <section class="bg-white rounded-[28px] p-5 mb-4 shadow-sm">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="font-bold text-[#191F28]">🥅 오늘의 승부차기</h2>
+          <span class="text-xs font-semibold text-[#8B95A1]">참여 완료</span>
+        </div>
+        <p class="text-sm font-bold text-[#4E5968]">오늘의 골문을 흔드는 도전을 완료하셨습니다.</p>
+        <p class="text-xs text-[#8B95A1] mt-1.5">
+          결과와 상관없이 일일 고정 참여 리워드 <b class="text-[#3182f6]">+30P</b>가 적급 완료되었습니다.
+        </p>
+      </section>`;
+    }
+
+    return `
+    <section class="bg-white rounded-[28px] p-5 mb-4 shadow-sm">
+      <h2 class="font-bold text-[#191F28] mb-1">🥅 오늘의 승부차기</h2>
+      <p class="text-sm text-[#8B95A1] mb-4">원하는 방향을 골라 패널티킥을 날리세요! 하루 단 한 번 참여 가능.</p>
+      <div id="shootout-zone" class="flex gap-2">
+        <button data-action="shoot" data-dir="왼쪽" class="pk-btn text-xs font-bold text-gray-400"><i class="fas fa-arrow-left text-blue-300 text-xl mb-block"></i>왼쪽</button>
+        <button data-action="shoot" data-dir="중앙" class="pk-btn text-xs font-bold text-gray-400"><i class="fas fa-arrow-up text-blue-300 text-xl mb-block"></i>중앙</button>
+        <button data-action="shoot" data-dir="오른쪽" class="pk-btn text-xs font-bold text-gray-400"><i class="fas fa-arrow-right text-blue-300 text-xl mb-block"></i>오른쪽</button>
+      </div>
+    </section>`;
+  }
+
+  function renderMatchesCard() {
+    const today = todayStr();
+    return `
+    <section class="bg-white rounded-[28px] p-5 mb-4 shadow-sm">
+      <h2 class="font-bold text-[#191F28] mb-1">⚽ 주간 빅매치 응원 센터</h2>
+      <p class="text-sm text-[#8B95A1] mb-4">좋아하는 팀을 응원하면 무료 참여 혜택 보너스 5P 즉시 적립!</p>
+      <div class="flex flex-col gap-3">
+        ${weeklyMatches.map(m => {
+          const homeCheered = state.cheeredMatches[`${m.id}-home`] === today;
+          const awayCheered = state.cheeredMatches[`${m.id}-away`] === today;
+          return `
+          <div class="border border-gray-100 rounded-2xl p-4 bg-[#F9FAFB]">
+            <div class="flex justify-between text-[11px] font-bold text-gray-400 mb-3">
+              <span>${m.league}</span>
+              <span>${m.time}</span>
             </div>
-
-            <div class="card p-7 space-y-6">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-xl font-bold">오늘의 퀴즈 📝</h3>
-                    <span id="quiz-badge" class="text-[11px] toss-bg-blue text-white px-3 py-1 rounded-md font-bold">초급 (1/4)</span>
-                </div>
-                <div class="space-y-6">
-                    <p id="q-text" class="text-xl font-bold leading-tight pt-2">문제를 불러오고 있습니다...</p>
-                    <div id="q-options" class="space-y-3"></div>
-                </div>
+            <div class="flex items-center justify-between">
+              ${renderTeamRow(m.id, "home", m.home, homeCheered)}
+              <span class="text-xs font-black text-gray-300 px-3">VS</span>
+              ${renderTeamRow(m.id, "away", m.away, awayCheered)}
             </div>
-        </section>
+          </div>`;
+        }).join("")}
+      </div>
+    </section>`;
+  }
 
-        <section id="view-predict" class="hidden space-y-5">
-            <div class="card p-6 bg-gradient-to-br from-blue-500 to-indigo-600 text-white space-y-2">
-                <div class="flex justify-between items-center">
-                    <span class="text-xs font-bold bg-white/20 px-3 py-1 rounded-full">🔥 연승 부스터 활성화</span>
-                    <span class="font-black text-yellow-300" id="ui-streak">현재 0연승 중</span>
+  function renderTeamRow(matchId, side, team, cheered) {
+    return `
+    <button data-action="cheer" data-match="${matchId}" data-side="${side}" ${cheered ? "disabled" : ""}
+      class="flex-1 flex flex-col items-center gap-1.5 py-1 rounded-xl transition ${cheered ? 'opacity-50' : 'active:scale-95'}">
+      <div class="jersey-kit" style="background: linear-gradient(135deg, ${team.primary} 50%, ${team.secondary} 50%);">
+        <span class="absolute text-[10px] font-black text-white mix-blend-difference">${team.short}</span>
+      </div>
+      <span class="text-xs font-bold text-[#191F28]">${team.name}</span>
+      <span class="text-[10px] font-bold ${cheered ? 'text-gray-400' : 'text-[#3182f6]'}">
+        ${cheered ? "응원완료 ✓" : "응원하기 +5P"}
+      </span>
+    </button>`;
+  }
+
+  // ===================== 4. [우리 방식] 가챠형 간식박스 상점 화면 =====================
+  function renderShop() {
+    const main = document.getElementById("app-content");
+    const doneToday = state.lastBoxDate === todayStr();
+
+    main.innerHTML = `
+    <section class="mb-2 px-1">
+      <h2 class="font-bold text-[#191F28] text-lg mb-1 mt-2">🎁 웰컴 간식 상자</h2>
+      <p class="text-sm text-[#8B95A1] mb-4">500P를 소모하여 꽝 없는 100% 당첨 간식 상자를 열어보세요! (하루 한 번 참여)</p>
+    </section>
+    
+    <div class="bg-white rounded-[28px] p-6 shadow-sm text-center border border-gray-50">
+      <div class="text-6xl my-4 animate-bounce">🎁</div>
+      <h3 class="text-lg font-black text-[#191F28]">오늘의 시크릿 간식박스</h3>
+      <p class="text-xs text-[#8B95A1] mt-1 px-4 leading-relaxed">
+        5,000원 이하 편의점 금액권, 사발면, 삼각김밥 기프티콘 또는 퀴즈 부활 아이템이 무작위로 등장합니다.
+      </p>
+      
+      <div class="mt-6">
+        ${doneToday 
+          ? `<button disabled class="w-full bg-[#E5E8EB] text-[#B0B8C1] font-bold text-sm rounded-[20px] py-4 cursor-not-allowed">
+               오늘은 이미 열었습니다. 내일 다시 만나요!
+             </button>`
+          : `<button data-action="open-box" class="w-full bg-[#3182f6] text-white font-black text-sm rounded-[20px] py-4 shadow-md active:scale-[0.98] transition">
+               500 P로 상자 열기
+             </button>`
+        }
+      </div>
+    </div>`;
+  }
+
+  // ===================== 5. 마이페이지 (오픈카톡 수동 수령 내역 바인딩) =====================
+  function renderMy() {
+    const main = document.getElementById("app-content");
+    main.innerHTML = `
+    <section class="bg-white rounded-[28px] p-5 mb-4 shadow-sm mt-2">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-14 h-14 rounded-full bg-[#3182f6]/10 flex items-center justify-center text-2xl">⚽</div>
+        <div>
+          <p class="font-black text-[#191F28] text-base">KICK QUIZ 서포터</p>
+          <p class="text-xs font-bold text-[#8B95A1] mt-0.5">토스 미니앱 공식 파트너 주주</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-2 text-center">
+        <div class="bg-[#F9FAFB] rounded-[16px] py-3">
+          <p class="text-xs font-bold text-[#8B95A1]">보유 포인트</p>
+          <p class="font-extrabold text-lg text-[#191F28] mt-0.5">${state.points.toLocaleString()} P</p>
+        </div>
+        <div class="bg-[#F9FAFB] rounded-[16px] py-3">
+          <p class="text-xs font-bold text-[#8B95A1]">성실 출석일</p>
+          <p class="font-extrabold text-lg text-[#191F28] mt-0.5">${state.participationStreak}일째</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-white rounded-[28px] p-5 mb-4 shadow-sm">
+      <h2 class="font-bold text-[#191F28] mb-3 text-base">🎫 내 간식 당첨 보관함</h2>
+      ${state.inventory.length === 0
+        ? `<p class="text-sm text-[#8B95A1] py-8 text-center font-medium">아직 당첨된 간식이 없습니다. 간식박스 상점에 도전해 보세요!</p>`
+        : `<div class="flex flex-col gap-2">
+            ${state.inventory.map(v => `
+              <div class="p-4 border border-gray-100 rounded-2xl bg-[#F9FAFB] flex flex-col gap-3">
+                <div class="flex items-center gap-3">
+                  <span class="text-2xl">${v.icon}</span>
+                  <div class="flex-1">
+                    <p class="text-sm font-bold text-[#191F28]">${v.name}</p>
+                    <p class="text-[11px] font-bold text-[#8B95A1]">교환코드: ${v.code} | 당첨일: ${v.date}</p>
+                  </div>
                 </div>
-                <p class="text-sm opacity-90">연속 예측 성공 시, 1/N 배당금 최대 <span class="font-bold text-yellow-300 text-lg">3.0배</span> 증폭!</p>
-            </div>
+                ${v.type === 'real' 
+                  ? `<a href="${OPEN_KAKAO_URL}" target="_blank" 
+                        class="w-full bg-white border border-gray-200 text-center text-xs font-bold rounded-xl py-2.5 shadow-sm hover:bg-gray-50 active:scale-[0.99] block text-[#3182f6]">
+                        💬 오픈카톡으로 스크린샷 인증하고 기프티콘 받기
+                     </a>`
+                  : `<div class="w-full bg-gray-200 text-center text-gray-500 text-xs font-bold rounded-xl py-2">
+                        인앱 전용 재화 (수동 연락 불필요)
+                     </div>`
+                }
+              </div>
+            `).join("")}
+          </div>`
+      }
+    </section>`;
+  }
 
-            <div class="card p-6 space-y-4">
-                <div class="flex justify-between items-center border-b pb-3">
-                    <h4 class="font-bold text-lg">이번 주 주요 경기 ⚽</h4>
-                    <span class="text-xs text-gray-400">참여비 무료 (0P)</span>
-                </div>
-                <div id="match-list" class="space-y-5">
-                    </div>
-            </div>
-        </section>
+  function goTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+      const active = btn.dataset.tab === tab;
+      btn.classList.toggle("text-[#3182f6]", active);
+      btn.classList.toggle("text-[#8B95A1]", !active);
+    });
+    if (tab === "home") renderHome();
+    else if (tab === "shop") renderShop();
+    else if (tab === "my") renderMy();
+  }
 
-        <section id="view-shop" class="hidden space-y-4">
-            <div onclick="buyBox(500)" class="card p-6 flex items-center justify-between active:border-blue-200 border-2 border-transparent cursor-pointer">
-                <div class="flex items-center space-x-4">
-                    <div class="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center text-2xl">📦</div>
-                    <div>
-                        <p class="font-bold text-lg">야식 박스</p>
-                        <p class="text-xs text-gray-400 font-bold">컵라면, 박카스, VAR권 등</p>
-                    </div>
-                </div>
-                <div class="toss-bg-blue text-white px-5 py-2.5 rounded-xl font-black text-sm">500 P</div>
-            </div>
-        </section>
+  // ===================== 6. 퀴즈 파이프라인 제어 엔진 =====================
+  async function startQuiz() {
+    if (state.lastQuizDate === todayStr()) return;
+    
+    try {
+      const res = await fetch("questions.json");
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      
+      const easyPool = (data.easy || []).sort(() => 0.5 - Math.random()).slice(0, 2);
+      const hardPool = (data.hard || []).sort(() => 0.5 - Math.random()).slice(0, 2);
+      const mixedQuestions = [...easyPool, ...hardPool];
+      
+      if (mixedQuestions.length < 4) throw new Error();
 
-    </main>
+      state.activeQuizSession = { questions: mixedQuestions, index: 0, correctCount: 0 };
+      saveState();
+      renderHome();
+    } catch (err) {
+      showToast("questions.json 데이터 파이프라인 로드 실패");
+    }
+  }
 
-    <nav class="tab-bar fixed bottom-0 left-0 right-0 h-20 flex items-center justify-around z-50">
-        <button onclick="showView('home')" class="flex flex-col items-center space-y-1 text-gray-400 active-tab" id="tab-home">
-            <i class="fas fa-home text-lg"></i><span class="text-[10px]">홈</span>
-        </button>
-        <button onclick="showView('predict')" class="flex flex-col items-center space-y-1 text-gray-400" id="tab-predict">
-            <i class="fas fa-chart-line text-lg"></i><span class="text-[10px]">승부예측</span>
-        </button>
-        <button onclick="showView('shop')" class="flex flex-col items-center space-y-1 text-gray-400" id="tab-shop">
-            <i class="fas fa-shopping-cart text-lg"></i><span class="text-[10px]">상점</span>
-        </button>
-    </nav>
+  function answerQuiz(choiceIdx) {
+    if (!state.activeQuizSession) return;
+    
+    const session = state.activeQuizSession;
+    const q = session.questions[session.index];
+    const isCorrect = choiceIdx === q.c;
+    
+    if (isCorrect) session.correctCount += 1;
 
-    <script>
-        // 1. 글로벌 게임 상태 상태 정의
-        let state = { points: 1000, varCount: 0, step: 0, streak: 0, questions: null };
+    document.querySelectorAll(".quiz-choice-btn").forEach(btn => (btn.disabled = true));
+    const feedback = document.getElementById("quiz-feedback");
+    feedback.textContent = isCorrect ? "정답입니다! ⚽" : `아쉽습니다! 정답은 "${q.a[q.c]}"`;
+    feedback.className = "text-sm font-bold mt-3 min-h-[20px] " + (isCorrect ? "text-[#3182f6]" : "text-[#E0440E]");
 
-        // 📅 주간 매치 라인업 원천 데이터셋 (직원 1호 전담 파트)
-        const weeklyMatches = [
-            { id: "M01", league: "PREMIER LEAGUE", time: "내일 04:00", home: { name: "아스널", icon: "🔴" }, away: { name: "토트넘", icon: "⚪" }, odds: { home: 1.4, draw: 3.2, away: 4.8 } },
-            { id: "M02", league: "PREMIER LEAGUE", time: "08.30 23:00", home: { name: "맨시티", icon: "🔵" }, away: { name: "리버풀", icon: "🔴" }, odds: { home: 1.8, draw: 3.5, away: 3.2 } },
-            { id: "M03", league: "PREMIER LEAGUE", time: "08.31 01:30", home: { name: "첼시", icon: "🔵" }, away: { name: "맨유", icon: "🔴" }, odds: { home: 2.1, draw: 3.1, away: 2.9 } }
-        ];
+    saveState();
 
-        // 💾 브라우저 스토리지 상시 세이브/로드 기능
-        function saveState() {
-            localStorage.setItem('kick_quiz_user_data', JSON.stringify({
-                points: state.points,
-                varCount: state.varCount,
-                step: state.step,
-                streak: state.streak
-            }));
-        }
+    setTimeout(() => {
+      session.index += 1;
+      if (session.index >= 4) {
+        finishQuiz();
+      } else {
+        saveState();
+        renderHome();
+      }
+    }, 1200);
+  }
 
-        function loadState() {
-            const savedData = localStorage.getItem('kick_quiz_user_data');
-            if (savedData) {
-                const parsed = JSON.parse(savedData);
-                state.points = parsed.points ?? 1000;
-                state.varCount = parsed.varCount ?? 0;
-                state.step = parsed.step ?? 0;
-                state.streak = parsed.streak ?? 0;
-            }
-        }
+  function finishQuiz() {
+    const session = state.activeQuizSession;
+    const correct = session.correctCount;
 
-        // 📂 2. 앱 토탈 구동 초기화 함수
-        async function init() {
-            loadState();    // 스토리지 복구
-            updateUI();     // 0P 초기 노출 차단 가드
-            renderMatches(); // 매치 동적 구축
-            
-            try {
-                const res = await fetch('questions.json');
-                state.questions = await res.json();
-                showQuestion();
-            } catch (e) {
-                document.getElementById('q-text').innerText = "데이터 로드 실패";
-            }
-        }
+    const basePoints = 40; 
+    const bonusPoints = correct * 10; 
+    const totalEarned = basePoints + bonusPoints;
 
-        // 📺 3. 뷰/탭 라우팅 매니저
-        function showView(name) {
-            ['view-home', 'view-predict', 'view-shop'].forEach(v => document.getElementById(v).classList.add('hidden'));
-            ['tab-home', 'tab-predict', 'tab-shop'].forEach(t => document.getElementById(t).classList.remove('active-tab'));
-            
-            document.getElementById('view-' + name).classList.remove('hidden');
-            document.getElementById('tab-' + name).classList.add('active-tab');
-            window.scrollTo(0,0);
-        }
+    state.points += totalEarned;
+    state.lastQuizDate = todayStr();
+    state.activeQuizSession = null;
+    recordParticipationToday();
+    saveState();
 
-        // 📝 4. 난이도별 스마트 퀴즈 가동 로직
-        function showQuestion() {
-            if (!state.questions) return;
-            const pool = state.step < 2 ? state.questions.easy : state.questions.hard;
-            const q = pool[Math.floor(Math.random() * pool.length)];
-            
-            const badge = document.getElementById('quiz-badge');
-            badge.innerText = state.step < 2 ? `초급 (${state.step+1}/4)` : `고급 (${state.step+1}/4)`;
-            
-            document.getElementById('q-text').innerText = q.q;
-            const optDiv = document.getElementById('q-options');
-            optDiv.innerHTML = '';
-            
-            q.a.forEach((opt, idx) => {
-                const btn = document.createElement('button');
-                btn.className = "btn-option";
-                btn.innerText = opt;
-                btn.onclick = () => {
-                    if (idx === q.c) {
-                        state.points += (state.step < 2 ? 20 : 50);
-                        if (state.step === 3) {
-                            alert("🎊 챌린지 완주 성공! 보너스 100P 추가 지급!");
-                            state.points += 100;
-                            state.step = 0;
-                        } else {
-                            state.step++;
-                        }
-                    } else {
-                        alert("오답입니다! 내일 다시 도전해 보세요.");
-                        state.step = 0;
-                    }
-                    saveState();
-                    showQuestion();
-                    updateUI();
-                };
-                optDiv.appendChild(btn);
-            });
-        }
+    showToast(`오늘의 퀴즈 정산 완료: +${totalEarned}P 적립`);
+    renderHome();
+    refreshPointsPill();
+  }
 
-        // 🥅 5. 피지컬 미니게임 (승부차기 50% 확률 연산)
-        function playPK() {
-            if (Math.random() < 0.5) {
-                state.points += 50;
-                alert("⚽ GOAL! 50P를 획득했습니다!");
-            } else {
-                alert("🧤 막혔습니다! 골키퍼 선방입니다.");
-            }
-            saveState();
-            updateUI();
-        }
+  // ===================== 7. 일일 서브 미니게임 처리 =====================
+  function shoot(direction) {
+    if (state.lastPkDate === todayStr()) return;
 
-        // 📊 6. 매치 동적 리스트 주입 파이프라인
-        function renderMatches() {
-            const matchListDiv = document.getElementById('match-list');
-            matchListDiv.innerHTML = ''; 
+    const outcome = Math.random() < 0.5 ? "goal" : "miss";
+    const earned = 30; 
 
-            weeklyMatches.forEach(match => {
-                const matchHtml = `
-                    <div class="p-4 border border-gray-100 rounded-2xl space-y-4 bg-white">
-                        <div class="flex justify-between text-xs font-bold text-gray-400">
-                            <span>${match.league}</span>
-                            <span>${match.time}</span>
-                        </div>
-                        <div class="flex items-center justify-around py-2">
-                            <div class="flex flex-col items-center space-y-1">
-                                <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-lg">${match.home.icon}</div>
-                                <span class="font-bold text-xs">${match.home.name}</span>
-                            </div>
-                            <span class="font-black text-gray-300">VS</span>
-                            <div class="flex flex-col items-center space-y-1">
-                                <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-lg">${match.away.icon}</div>
-                                <span class="font-bold text-xs">${match.away.name}</span>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-3 gap-2">
-                            <button onclick="predictMatch('${match.id}', '${match.home.name} 승')" class="py-2.5 bg-blue-50 text-blue-600 text-xs font-bold rounded-xl active:scale-95 transition-all">${match.home.name} 승<br><span class="text-[10px] text-gray-400 font-normal">예상 ${match.odds.home}배</span></button>
-                            <button onclick="predictMatch('${match.id}', '무승부')" class="py-2.5 bg-gray-50 text-gray-500 text-xs font-bold rounded-xl active:scale-95 transition-all">무승부<br><span class="text-[10px] text-gray-400 font-normal">예상 ${match.odds.draw}배</span></button>
-                            <button onclick="predictMatch('${match.id}', '${match.away.name} 승')" class="py-2.5 bg-blue-50 text-blue-600 text-xs font-bold rounded-xl active:scale-95 transition-all">${match.away.name} 승<br><span class="text-[10px] text-gray-400 font-normal">예상 ${match.odds.away}배</span></button>
-                        </div>
-                    </div>
-                `;
-                matchListDiv.innerHTML += matchHtml;
-            });
-        }
+    state.points += earned;
+    state.lastPkDate = todayStr();
+    recordParticipationToday();
+    saveState();
 
-        // 📊 7. 승부예측 무배당 안전 처리 로직
-        function predictMatch(matchId, choice) {
-            alert(`[예측 완료] 선택: ${choice} \n\n경기가 종료되면 정산이 진행됩니다. 성공 시 현재 [${state.streak}연승 부스터]가 적용됩니다!`);
-            state.streak++; 
-            saveState();
-            updateUI();
-        }
+    showToast(outcome === "goal" ? `⚽ 골인 성공! 참여 리워드 +${earned}P` : `🧤 골키퍼 선방! 참여 리워+${earned}P`);
+    renderHome();
+    refreshPointsPill();
+  }
 
-        // 📦 8. 재화 상점 결제 정산 로직
-        function buyBox(price) {
-            if (state.points < price) return alert("포인트가 부족합니다.");
-            state.points -= price;
-            alert("📦 상점 박스 구매 완료! 야식이 배달될 때까지 대기해 주세요.");
-            saveState();
-            updateUI();
-        }
+  function cheer(matchId, side) {
+    const key = `${matchId}-${side}`;
+    if (state.cheeredMatches[key] === todayStr()) return;
 
-        // 📺 9. UI 데이터 동기화 파싱
-        function updateUI() {
-            document.getElementById('ui-points').innerText = `${state.points.toLocaleString()} P`;
-            document.getElementById('ui-streak').innerText = `현재 ${state.streak}연승 중`;
-        }
+    const earned = 5;
+    state.points += earned;
+    state.cheeredMatches[key] = todayStr();
+    recordParticipationToday();
+    saveState();
 
-        window.onload = init;
-    </script>
+    showToast(`구단 응원 보너스 완료! +${earned}P`);
+    renderHome();
+    refreshPointsPill();
+  }
+
+  // ===================== 8. [우리 방식] 확률제어형 1일 1회 간식박스 알고리즘 =====================
+  function openSnackBox() {
+    if (state.lastBoxDate === todayStr()) return;
+    if (state.points < 500) {
+      showToast("상자를 열기 위한 포인트(500P)가 부족합니다.");
+      return;
+    }
+
+    state.points -= 500;
+    state.lastBoxDate = todayStr(); // 오늘 날짜 락인(락다운)
+
+    const seed = Math.random() * 100;
+    let wonItem = null;
+
+    // 대표님의 주머니 사정을 완벽하게 보호하는 가차 확률 테이블 바인딩
+    if (seed < 1.5) {
+      wonItem = { type: 'real', icon: '🏪', name: '메가커피 3000원원 상품권' };
+    } else if (seed < 5.0) {
+      wonItem = { type: 'real', icon: '🍜', name: '팔도 육개장 사발면 기프티콘' };
+    } else if (seed < 12.0) {
+      wonItem = { type: 'real', icon: '🍭', name: '츄파춥스 낱개 모바일 교환권' };
+    } else if (seed < 40.0) {
+      wonItem = { type: 'digital', icon: '🎫', name: '오답 즉시 부활 VAR권 (1회용)' };
+    } else {
+      // 꽝 대신 리턴되는 무료 적립금 보충 플로우
+      wonItem = { type: 'points', icon: '🪙', name: '보너스 복구 포인트 100P 적립' };
+      state.points += 100;
+    }
+
+    // 데이터 영구 저장
+    if (wonItem.type !== 'points') {
+      state.inventory.push({
+        id: "inv_" + Date.now().toString(36),
+        type: wonItem.type,
+        icon: wonItem.icon,
+        name: wonItem.name,
+        date: todayStr(),
+        code: Math.random().toString(36).substr(2, 7).toUpperCase()
+      });
+    }
+
+    saveState();
+    refreshPointsPill();
+    renderShop(); // 상점 화면 리프레시를 통해 버튼 잠금 처리
+
+    // 결과 팝업 피드백 출력
+    alert(`🎁 간식 상자 오픈 결과! \n\n[${wonItem.icon} ${wonItem.name}] 에 당첨되셨습니다. \n\n실물 상품권은 즉시 'MY' 탭 보관함에 업데이트되었으며 오픈카톡 수동 정산 신청이 가능합니다.`);
+  }
+
+  function refreshPointsPill() {
+    document.getElementById("points-value").textContent = `${state.points.toLocaleString()} P`;
+  }
+
+  // 글로벌 이벤트 허브 연동
+  document.body.addEventListener("click", (e) => {
+    const el = e.target.closest("[data-action]");
+    if (!el) return;
+    const action = el.dataset.action;
+
+    if (action === "go-tab") goTab(el.dataset.tab);
+    else if (action === "start-quiz") startQuiz();
+    else if (action === "answer-quiz") answerQuiz(Number(el.dataset.idx));
+    else if (action === "shoot") shoot(el.dataset.dir);
+    else if (action === "cheer") cheer(el.dataset.match, el.dataset.side);
+    else if (action === "open-box") openSnackBox();
+  });
+
+  // 초기 로드 가동
+  refreshPointsPill();
+  goTab("home");
+
+</script>
 </body>
 </html>
